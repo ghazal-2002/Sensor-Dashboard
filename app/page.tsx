@@ -21,15 +21,14 @@ import zoomPlugin from 'chartjs-plugin-zoom'
 const Line = dynamic(() => import('react-chartjs-2').then(mod => mod.Line), {
   ssr: false
 })
-
-ChartJS.register(
+/*ChartJS.register(
   LineElement,
   CategoryScale,
   LinearScale,
   PointElement,
   Legend,
   zoomPlugin
-)
+)*/
 
 // ====================== HOME COMPONENT ========================= //
 export default function Home() {
@@ -37,6 +36,25 @@ export default function Home() {
   const [intervalTime, setIntervalTime] = useState(2000)    //How often to fetch data (ms)
   const [timeRange, setTimeRange] = useState(1)            //How much past data to analyze (minutes), Used for filtering
 
+
+useEffect(() => {
+  async function loadChartPlugins() {
+    const zoomPlugin = (await import('chartjs-plugin-zoom')).default
+
+    ChartJS.register(
+      LineElement,
+      CategoryScale,
+      LinearScale,
+      PointElement,
+      Legend,
+      zoomPlugin
+    )
+  }
+
+  // Load Chart.js plugins dynamically
+
+  loadChartPlugins()
+}, [])
   useEffect(() => {
     fetchData()
     const interval = setInterval(fetchData, intervalTime)
