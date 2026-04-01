@@ -2,6 +2,7 @@
 
 // ====================== IMPORTS ========================= //
 import { useEffect, useState } from 'react'
+import dynamic from 'next/dynamic'
 import { supabase } from '../lib/supabase' //connects frontend to database
 import { ChartOptions } from 'chart.js'
 import { CSSProperties } from "react"
@@ -16,7 +17,10 @@ import {
 } from 'chart.js'
 
 import zoomPlugin from 'chartjs-plugin-zoom'
-import { Line } from 'react-chartjs-2'
+//import { Line } from 'react-chartjs-2'
+const Line = dynamic(() => import('react-chartjs-2').then(mod => mod.Line), {
+  ssr: false
+})
 
 ChartJS.register(
   LineElement,
