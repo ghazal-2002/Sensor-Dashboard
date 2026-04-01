@@ -6,6 +6,8 @@ import dynamic from 'next/dynamic'
 import { supabase } from '../lib/supabase' //connects frontend to database
 import { ChartOptions } from 'chart.js'
 import { CSSProperties } from "react"
+import jsPDF from "jspdf"
+import autoTable from "jspdf-autotable"
 
 import {
   Chart as ChartJS,
@@ -21,14 +23,6 @@ import zoomPlugin from 'chartjs-plugin-zoom'
 const Line = dynamic(() => import('react-chartjs-2').then(mod => mod.Line), {
   ssr: false
 })
-/*ChartJS.register(
-  LineElement,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  Legend,
-  zoomPlugin
-)*/
 
 // ====================== HOME COMPONENT ========================= //
 export default function Home() {
@@ -146,6 +140,30 @@ useEffect(() => {
     a.download = 'report.csv'
     a.click()
   }
+
+  //PDF DOWNLOAD
+  function downloadPDF() {
+  const doc = new jsPDF()
+
+  doc.setFontSize(18)
+  doc.text("Sensor Data Report", 14, 20)
+
+  doc.setFontSize(12)
+  doc.text(`Time Range: Last ${timeRange} minutes`, 14, 30)
+
+  autoTable(doc, {
+    startY: 40,
+    head: [['Axis', 'Average', 'Min', 'Max']],
+    body: [
+      ['X', xStats.avg, xStats.min, xStats.max],
+      ['Y', yStats.avg, yStats.min, yStats.max],
+      ['Z', zStats.avg, zStats.min, zStats.max],
+      ['Temp', tStats.avg, tStats.min, tStats.max],
+    ]
+  })
+
+  doc.save("report.pdf")
+}
 
   //CHART DATA (IMPORTANT: filteredData)
 const xValues = filteredData.map(d => d["x-axis"] ?? 0)
@@ -285,13 +303,26 @@ const zChartData = {
             </select>
           </div>
 
-          {/* DOWNLOAD */}
+          {/* DOWNLOAD  FILES */}
+           <h3>Download Report</h3>
           <div style={card}>
-            <h3>Download Report</h3>
+            
+           
             <button onClick={downloadCSV} style={buttonStyle}>
               ⬇ Download CSV
             </button>
           </div>
+          
+          <div style={card}>
+            
+            <button onClick={downloadPDF} style={buttonStyle}>
+  📄 Download PDF
+</button>
+
+          </div>
+
+
+          
 
            {/* STATS TABLE */}
       <div style={{ marginTop: "30px" }}>
