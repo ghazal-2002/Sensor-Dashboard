@@ -6,8 +6,7 @@ import dynamic from 'next/dynamic'
 import { supabase } from '../lib/supabase' //connects frontend to database
 import { ChartOptions } from 'chart.js'
 import { CSSProperties } from "react"
-import jsPDF from "jspdf"
-import autoTable from "jspdf-autotable"
+
 
 import {
   Chart as ChartJS,
@@ -18,14 +17,14 @@ import {
   Legend
 } from 'chart.js'
 
-import zoomPlugin from 'chartjs-plugin-zoom'
-//import { Line } from 'react-chartjs-2'
 const Line = dynamic(() => import('react-chartjs-2').then(mod => mod.Line), {
   ssr: false
 })
 
 // ====================== HOME COMPONENT ========================= //
 export default function Home() {
+
+  const [chartReady, setChartReady] = useState(false)
   const [data, setData] = useState<any[]>([])               //Stores sensor data from database
   const [intervalTime, setIntervalTime] = useState(2000)    //How often to fetch data (ms)
   const [timeRange, setTimeRange] = useState(1)            //How much past data to analyze (minutes), Used for filtering
@@ -43,17 +42,24 @@ useEffect(() => {
       Legend,
       zoomPlugin
     )
+     setChartReady(true)
   }
 
-  // Load Chart.js plugins dynamically
 
+
+  // Load Chart.js plugins dynamically
   loadChartPlugins()
 }, [])
+
+
   useEffect(() => {
     fetchData()
     const interval = setInterval(fetchData, intervalTime)
     return () => clearInterval(interval)
   }, [intervalTime])
+
+
+
 
   async function fetchData() {
     const { data, error } = await supabase
@@ -66,9 +72,14 @@ useEffect(() => {
     }
   }
 
+
+
+
   function createOptions(values: number[]): ChartOptions<'line'> {
   const min = Math.min(...values, 0)
   const max = Math.max(...values, 0)
+
+
 
   return {
     responsive: true,
@@ -142,7 +153,9 @@ useEffect(() => {
   }
 
   //PDF DOWNLOAD
-  function downloadPDF() {
+  async function downloadPDF() {
+  const { default: jsPDF } = await import('jspdf')
+  const autoTable = (await import('jspdf-autotable')).default
   const doc = new jsPDF()
 
   doc.setFontSize(18)
@@ -165,14 +178,15 @@ useEffect(() => {
   doc.save("report.pdf")
 }
 
+
+
   //CHART DATA (IMPORTANT: filteredData)
 const xValues = filteredData.map(d => d["x-axis"] ?? 0)
 const yValues = filteredData.map(d => d["y-axis"] ?? 0)
 const zValues = filteredData.map(d => d["z-axis"] ?? 0)
 const tValues = filteredData.map(d => d["temperature"] ?? 0)
-
 const labels = filteredData.map((item) =>
-  new Date(item.timestamp * 1000).toLocaleTimeString()
+new Date(item.timestamp * 1000).toLocaleTimeString()
 )
 
   const xChartData = {
@@ -251,7 +265,9 @@ const zChartData = {
   <div style={card}>
     <h3>X Axis</h3>
     <div style={{ height: "250px" }}>
-      <Line data={xChartData} options={createOptions( xValues)} />
+     {chartReady && (
+  <Line data={xChartData} options={createOptions(xValues)} />
+)}
     </div>
   </div>
 
@@ -259,7 +275,9 @@ const zChartData = {
   <div style={{ ...card, marginTop: "20px" }}>
     <h3>Y Axis</h3>
     <div style={{ height: "250px" }}>
-      <Line data={yChartData} options={createOptions(yValues)} />
+      {chartReady && (
+  <Line data={yChartData} options={createOptions(yValues)} />
+)}
     </div>
   </div>
 
@@ -267,7 +285,9 @@ const zChartData = {
   <div style={{ ...card, marginTop: "20px" }}>
     <h3>Z Axis</h3>
     <div style={{ height: "250px" }}>
-      <Line data={zChartData} options={createOptions(zValues)} />
+      {chartReady && (
+  <Line data={zChartData} options={createOptions(zValues)} />
+)}
     </div>
   </div>
 
@@ -307,7 +327,6 @@ const zChartData = {
            <h3>Download Report</h3>
           <div style={card}>
             
-           
             <button onClick={downloadCSV} style={buttonStyle}>
               ⬇ Download CSV
             </button>
@@ -321,8 +340,7 @@ const zChartData = {
 
           </div>
 
-
-          
+     
 
            {/* STATS TABLE */}
       <div style={{ marginTop: "30px" }}>
